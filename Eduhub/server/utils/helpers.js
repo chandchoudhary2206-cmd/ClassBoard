@@ -22,7 +22,7 @@ const paginate = (page = 1, limit = 10) => {
 const buildFilter = (query, allowedFields) => {
   const filter = {};
   for (const key of allowedFields) {
-    if (query[key] !== undefined) {
+    if (query[key] !== undefined && query[key] !== '') {
       filter[key] = query[key];
     }
   }
