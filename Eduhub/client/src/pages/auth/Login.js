@@ -59,14 +59,16 @@ export default function Login() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
           <div className="relative">
             <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="you@example.com"
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-            />
+            <input 
+  type="email" 
+  name="email" 
+  value={form.email} 
+  onChange={handleChange} 
+  placeholder="you@example.com" 
+  autoComplete="email"
+  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" 
+/>
+            
           </div>
         </div>
 
@@ -74,14 +76,15 @@ export default function Login() {
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
           <div className="relative">
             <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-            />
+            <input 
+  type={showPassword ? "text" : "password"} 
+  name="password" 
+  value={form.password} 
+  onChange={handleChange} 
+  placeholder="Enter your password" 
+  autoComplete="current-password"
+  className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" 
+/>
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
