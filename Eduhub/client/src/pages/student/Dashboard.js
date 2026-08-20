@@ -22,7 +22,15 @@ export default function Dashboard() {
   const dashboard = data || {};
   const timetable = dashboard.todaysTimetable || [];
   const assignments = dashboard.upcomingAssignments || [];
-  const announcements = [];
+  const announcements = dashboard.announcements || [
+  {
+    _id: "1",
+    title: "Welcome to ClassBoard",
+    content: "Check your classes, assignments and attendance regularly.",
+    author: { name: "Admin" },
+    createdAt: new Date(),
+  },
+];
 
   const att = dashboard.attendanceSummary || {};
   const attPct = att.total > 0 ? Math.round((att.present / att.total) * 100) : 0;
