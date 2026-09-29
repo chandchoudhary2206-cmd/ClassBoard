@@ -6,7 +6,12 @@ import Modal from "../../components/Modal";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import EmptyState from "../../components/EmptyState";
 import FileUpload from "../../components/FileUpload";
-import { FiClipboard, FiEye, FiSend } from "react-icons/fi";
+import {
+  FiClipboard,
+  FiEye,
+  FiSend,
+  FiSearch,
+} from "react-icons/fi";
 
 export default function Assignments() {
   const [detailModal, setDetailModal] = useState(false);
@@ -16,17 +21,65 @@ export default function Assignments() {
   const [submitting, setSubmitting] = useState(false);
   const [notes, setNotes] = useState("");
 
-  const { data: assignmentsData, loading, error, refetch: refetchAssignments } = useFetch("/assignments");
-  const { data: submissionsData, refetch: refetchSubmissions } = useFetch("/submissions/my/all");
+  // New search and filter states
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const assignments = assignmentsData?.assignments || assignmentsData?.data || [];
-  const submissions = submissionsData?.submissions || submissionsData?.data || [];
+  const {
+    data: assignmentsData,
+    loading,
+    error,
+    refetch: refetchAssignments,
+  } = useFetch("/assignments");
+
+  const {
+    data: submissionsData,
+    refetch: refetchSubmissions,
+  } = useFetch("/submissions/my/all");
+
+  const assignments =
+    assignmentsData?.assignments || assignmentsData?.data || [];
+
+  const submissions =
+    submissionsData?.submissions || submissionsData?.data || [];
 
   const getSubmissionForAssignment = (assignmentId) => {
     return submissions.find(
       (s) => (s.assignment?._id || s.assignmentId) === assignmentId
     );
   };
+
+  // Get assignment status
+  const getAssignmentStatus = (assignment) => {
+    const sub = getSubmissionForAssignment(assignment._id);
+
+    if (sub) {
+      return sub.status === "graded" ? "graded" : "submitted";
+    }
+
+    const due = new Date(assignment.dueDate);
+    const now = new Date();
+
+    if (due < now) {
+      return "overdue";
+    }
+
+    return "pending";
+  };
+
+  // Filter assignments
+  const filteredAssignments = assignments.filter((assignment) => {
+    const matchesSearch = assignment.title
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+
+    const status = getAssignmentStatus(assignment);
+
+    const matchesStatus =
+      statusFilter === "all" || status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const openDetail = (asg) => {
     setSelectedAssignment(asg);
@@ -44,32 +97,43 @@ export default function Assignments() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!file) return alert("Please upload a file");
     if (!selectedAssignment) return;
 
     setSubmitting(true);
+
     try {
       const formData = new FormData();
+
       formData.append("assignmentId", selectedAssignment._id);
       formData.append("notes", notes);
       formData.append("file", file);
 
       await api.post("/submissions", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       setSubmitModal(false);
       refetchSubmissions();
       refetchAssignments();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to submit assignment");
+      alert(
+        err.response?.data?.message ||
+          "Failed to submit assignment"
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   const columns = [
-    { key: "title", label: "Assignment Title" },
+    {
+      key: "title",
+      label: "Assignment Title",
+    },
     {
       key: "subject",
       label: "Subject",
@@ -78,30 +142,47 @@ export default function Assignments() {
     {
       key: "dueDate",
       label: "Due Date",
-      render: (val) => (val ? new Date(val).toLocaleDateString() : ""),
+      render: (val) =>
+        val ? new Date(val).toLocaleDateString() : "",
     },
     {
       key: "_id",
       label: "Status",
       render: (val) => {
         const sub = getSubmissionForAssignment(val);
+
         let status = "pending";
         let color = "bg-gray-100 text-gray-600";
+
         if (sub) {
-          status = sub.status === "graded" ? "graded" : "submitted";
-          color = sub.status === "graded"
-            ? "bg-green-100 text-green-700"
-            : "bg-blue-100 text-blue-700";
+          status =
+            sub.status === "graded"
+              ? "graded"
+              : "submitted";
+
+          color =
+            sub.status === "graded"
+              ? "bg-green-100 text-green-700"
+              : "bg-blue-100 text-blue-700";
         }
+
         const now = new Date();
-        const due = new Date(assignments.find((a) => a._id === val)?.dueDate);
+
+        const due = new Date(
+          assignments.find((a) => a._id === val)?.dueDate
+        );
+
         if (!sub && due < now) {
           status = "overdue";
           color = "bg-red-100 text-red-700";
         }
+
         return (
-          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${color}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+          <span
+            className={`px-2 py-0.5 text-xs font-medium rounded-full ${color}`}
+          >
+            {status.charAt(0).toUpperCase() +
+              status.slice(1)}
           </span>
         );
       },
@@ -111,10 +192,17 @@ export default function Assignments() {
       label: "Marks",
       render: (val) => {
         const sub = getSubmissionForAssignment(val);
-        const asg = assignments.find((a) => a._id === val);
-        if (sub?.marks !== undefined && sub?.marks !== null) {
+        const asg = assignments.find(
+          (a) => a._id === val
+        );
+
+        if (
+          sub?.marks !== undefined &&
+          sub?.marks !== null
+        ) {
           return `${sub.marks} / ${asg?.maxMarks || "?"}`;
         }
+
         return sub ? "Pending" : "--";
       },
     },
@@ -125,6 +213,7 @@ export default function Assignments() {
         const sub = getSubmissionForAssignment(val);
         const now = new Date();
         const due = new Date(row.dueDate);
+
         return (
           <div className="flex items-center gap-2">
             <button
@@ -134,15 +223,17 @@ export default function Assignments() {
             >
               <FiEye className="w-4 h-4" />
             </button>
-            {(!sub || row.allowResubmission) && due >= now && (
-              <button
-                onClick={() => openSubmit(row)}
-                className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50"
-                title={sub ? "Resubmit" : "Submit"}
-              >
-                <FiSend className="w-4 h-4" />
-              </button>
-            )}
+
+            {(!sub || row.allowResubmission) &&
+              due >= now && (
+                <button
+                  onClick={() => openSubmit(row)}
+                  className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50"
+                  title={sub ? "Resubmit" : "Submit"}
+                >
+                  <FiSend className="w-4 h-4" />
+                </button>
+              )}
           </div>
         );
       },
@@ -152,8 +243,13 @@ export default function Assignments() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Assignments</h1>
-        <p className="text-sm text-gray-500 mt-1">View and submit your assignments</p>
+        <h1 className="text-2xl font-bold text-gray-800">
+          Assignments
+        </h1>
+
+        <p className="text-sm text-gray-500 mt-1">
+          View and submit your assignments
+        </p>
       </div>
 
       {error && (
@@ -162,45 +258,124 @@ export default function Assignments() {
         </div>
       )}
 
+      {!loading && assignments.length > 0 && (
+        <div className="bg-white p-4 rounded-xl border border-gray-200">
+          <div className="flex flex-col md:flex-row gap-3 justify-between">
+            
+            {/* Search */}
+            <div className="relative flex-1">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search assignments..."
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value)
+              }
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="submitted">Submitted</option>
+              <option value="graded">Graded</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
+
+          {/* Assignment count */}
+          <p className="text-sm text-gray-500 mt-3">
+            Showing {filteredAssignments.length} of{" "}
+            {assignments.length} assignments
+          </p>
+        </div>
+      )}
+
       {loading ? (
         <LoadingSpinner message="Loading assignments..." />
-      ) : assignments.length === 0 ? (
+      ) : filteredAssignments.length === 0 ? (
         <EmptyState
           icon={<FiClipboard className="w-16 h-16" />}
           title="No assignments"
-          description="No assignments have been posted yet"
+          description={
+            assignments.length === 0
+              ? "No assignments have been posted yet"
+              : "No assignments match your search or filter"
+          }
         />
       ) : (
-        <DataTable columns={columns} data={assignments} />
+        <DataTable
+          columns={columns}
+          data={filteredAssignments}
+        />
       )}
 
-      <Modal isOpen={detailModal} onClose={() => setDetailModal(false)} title="Assignment Details" size="lg">
+      {/* Assignment Details Modal */}
+      <Modal
+        isOpen={detailModal}
+        onClose={() => setDetailModal(false)}
+        title="Assignment Details"
+        size="lg"
+      >
         {selectedAssignment && (
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">{selectedAssignment.title}</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                {selectedAssignment.title}
+              </h3>
+
               <p className="text-sm text-gray-500 mt-1">
-                {selectedAssignment.subject?.name || selectedAssignment.subjectName}
+                {selectedAssignment.subject?.name ||
+                  selectedAssignment.subjectName}
               </p>
             </div>
+
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="p-3 rounded-lg bg-gray-50">
-                <p className="text-xs text-gray-500">Due Date</p>
+                <p className="text-xs text-gray-500">
+                  Due Date
+                </p>
+
                 <p className="font-medium text-gray-700 mt-0.5">
-                  {selectedAssignment.dueDate ? new Date(selectedAssignment.dueDate).toLocaleString() : "N/A"}
+                  {selectedAssignment.dueDate
+                    ? new Date(
+                        selectedAssignment.dueDate
+                      ).toLocaleString()
+                    : "N/A"}
                 </p>
               </div>
+
               <div className="p-3 rounded-lg bg-gray-50">
-                <p className="text-xs text-gray-500">Max Marks</p>
-                <p className="font-medium text-gray-700 mt-0.5">{selectedAssignment.maxMarks || "N/A"}</p>
+                <p className="text-xs text-gray-500">
+                  Max Marks
+                </p>
+
+                <p className="font-medium text-gray-700 mt-0.5">
+                  {selectedAssignment.maxMarks || "N/A"}
+                </p>
               </div>
             </div>
+
             {selectedAssignment.description && (
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Description</p>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">{selectedAssignment.description}</p>
+                <p className="text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </p>
+
+                <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                  {selectedAssignment.description}
+                </p>
               </div>
             )}
+
             {selectedAssignment.file && (
               <a
                 href={selectedAssignment.file}
@@ -208,25 +383,40 @@ export default function Assignments() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100"
               >
-                <FiClipboard className="w-4 h-4" /> View Attachment
+                <FiClipboard className="w-4 h-4" />
+                View Attachment
               </a>
             )}
+
             {(() => {
-              const sub = getSubmissionForAssignment(selectedAssignment._id);
+              const sub = getSubmissionForAssignment(
+                selectedAssignment._id
+              );
+
               if (sub) {
                 return (
                   <div className="p-4 rounded-lg bg-green-50 border border-green-200">
                     <p className="text-sm font-medium text-green-800">
-                      {sub.status === "graded" ? "Graded" : "Submitted"}
+                      {sub.status === "graded"
+                        ? "Graded"
+                        : "Submitted"}
                     </p>
-                    {sub.marks !== undefined && sub.marks !== null && (
+
+                    {sub.marks !== undefined &&
+                      sub.marks !== null && (
+                        <p className="text-sm text-green-700 mt-1">
+                          Marks: {sub.marks} /{" "}
+                          {selectedAssignment.maxMarks ||
+                            "?"}
+                        </p>
+                      )}
+
+                    {sub.feedback && (
                       <p className="text-sm text-green-700 mt-1">
-                        Marks: {sub.marks} / {selectedAssignment.maxMarks || "?"}
+                        Feedback: {sub.feedback}
                       </p>
                     )}
-                    {sub.feedback && (
-                      <p className="text-sm text-green-700 mt-1">Feedback: {sub.feedback}</p>
-                    )}
+
                     {sub.file && (
                       <a
                         href={sub.file}
@@ -240,8 +430,10 @@ export default function Assignments() {
                   </div>
                 );
               }
+
               return null;
             })()}
+
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
               <button
                 onClick={() => setDetailModal(false)}
@@ -249,32 +441,59 @@ export default function Assignments() {
               >
                 Close
               </button>
-              {(!getSubmissionForAssignment(selectedAssignment._id) || selectedAssignment.allowResubmission) &&
-                new Date(selectedAssignment.dueDate) >= new Date() && (
-                <button
-                  onClick={() => { setDetailModal(false); openSubmit(selectedAssignment); }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700"
-                >
-                  <FiSend className="w-4 h-4" /> Submit
-                </button>
-              )}
+
+              {(!getSubmissionForAssignment(
+                selectedAssignment._id
+              ) ||
+                selectedAssignment.allowResubmission) &&
+                new Date(selectedAssignment.dueDate) >=
+                  new Date() && (
+                  <button
+                    onClick={() => {
+                      setDetailModal(false);
+                      openSubmit(selectedAssignment);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700"
+                  >
+                    <FiSend className="w-4 h-4" />
+                    Submit
+                  </button>
+                )}
             </div>
           </div>
         )}
       </Modal>
 
-      <Modal isOpen={submitModal} onClose={() => setSubmitModal(false)} title="Submit Assignment" size="md">
+      {/* Submit Assignment Modal */}
+      <Modal
+        isOpen={submitModal}
+        onClose={() => setSubmitModal(false)}
+        title="Submit Assignment"
+        size="md"
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           {selectedAssignment && (
             <div className="p-3 rounded-lg bg-gray-50">
-              <p className="text-sm font-medium text-gray-800">{selectedAssignment.title}</p>
+              <p className="text-sm font-medium text-gray-800">
+                {selectedAssignment.title}
+              </p>
+
               <p className="text-xs text-gray-500 mt-0.5">
-                Due: {selectedAssignment.dueDate ? new Date(selectedAssignment.dueDate).toLocaleString() : "N/A"}
+                Due:{" "}
+                {selectedAssignment.dueDate
+                  ? new Date(
+                      selectedAssignment.dueDate
+                    ).toLocaleString()
+                  : "N/A"}
               </p>
             </div>
           )}
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Notes (optional)
+            </label>
+
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -283,8 +502,12 @@ export default function Assignments() {
               placeholder="Add any notes for your submission..."
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Upload File *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Upload File *
+            </label>
+
             <FileUpload
               onFileSelect={handleFileSelect}
               accept=".pdf,.doc,.docx,.txt,.jpg,.png,.zip,.ppt,.pptx"
@@ -292,6 +515,7 @@ export default function Assignments() {
               label="Upload your assignment"
             />
           </div>
+
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
@@ -300,6 +524,7 @@ export default function Assignments() {
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={submitting || !file}
