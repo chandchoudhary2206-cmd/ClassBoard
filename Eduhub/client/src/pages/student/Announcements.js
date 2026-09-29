@@ -13,6 +13,7 @@ const TYPE_OPTIONS = [
 
 export default function Announcements() {
   const [typeFilter, setTypeFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState(null);
 
   const { data, loading, error } = useFetch("/announcements");
@@ -23,9 +24,17 @@ export default function Announcements() {
     (a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)
   );
 
-  const filtered = typeFilter
-    ? sorted.filter((a) => (a.type || "general") === typeFilter)
-    : sorted;
+  const filtered = sorted.filter((a) => {
+  const matchesType = typeFilter
+    ? (a.type || "general") === typeFilter
+    : true;
+
+  const matchesSearch =
+    (a.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (a.content || "").toLowerCase().includes(searchTerm.toLowerCase());
+
+  return matchesType && matchesSearch;
+});
 
   const getTypeIcon = (type) => {
     switch (type) {
@@ -56,6 +65,13 @@ export default function Announcements() {
           <h1 className="text-2xl font-bold text-gray-800">Announcements</h1>
           <p className="text-sm text-gray-500 mt-1">Stay updated with the latest announcements</p>
         </div>
+        <input
+  type="text"
+  placeholder="Search announcements..."
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+/>
         <div className="flex items-center gap-2">
           {TYPE_OPTIONS.map((opt) => (
             <button
