@@ -69,6 +69,7 @@ export default function Assignments() {
     if (!form.subjectId) return alert("Please select a subject");
     if (!form.dueDate) return alert("Please set a due date");
     if (!form.maxMarks) return alert("Please enter max marks");
+    if (Number(form.maxMarks) <= 0) return alert("Maximum marks must be greater than 0");
 
     setSaving(true);
     try {
