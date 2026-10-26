@@ -67,8 +67,11 @@ export default function Attendance() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedClass || !selectedSubject || !selectedDate) {
-      return alert("Please select class, subject, and date");
-    }
+  return alert("Please select class, subject, and date");
+}
+if (selectedDate > new Date().toISOString().slice(0, 10)) {
+  return alert("Attendance cannot be marked for a future date");
+}
     const entries = Object.entries(attendance).filter(
       ([id, status]) => status && !isAlreadyMarked(id)
     );
