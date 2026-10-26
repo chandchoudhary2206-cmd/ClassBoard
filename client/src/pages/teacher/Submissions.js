@@ -36,6 +36,10 @@ export default function Submissions() {
   const handleGrade = async (e) => {
     e.preventDefault();
     if (marks === "" || marks === null) return alert("Please enter marks");
+    const maxMarks = Number(gradingSubmission?.assignment?.maxMarks || gradingSubmission?.maxMarks || 100);
+if (Number(marks) < 0 || Number(marks) > maxMarks) {
+  return alert(`Marks must be between 0 and ${maxMarks}`);
+}
     setSaving(true);
     try {
       await api.put(`/submissions/${gradingSubmission._id}/grade`, {

@@ -12,7 +12,7 @@ function getCurrentWeekDates() {
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
-  const week = [];
+  const week = [];l
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
@@ -180,6 +180,9 @@ export default function Calendar() {
               Weekly Summary
             </h2>
             <div className="space-y-2">
+  {Object.keys(groupedByDay).length === 0 && (
+    <p className="text-sm text-gray-400">No classes this week</p>
+  )}
               {Object.entries(groupedByDay).map(([day, entries]) => (
                 <div key={day} className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">{day.slice(0, 3)}</span>

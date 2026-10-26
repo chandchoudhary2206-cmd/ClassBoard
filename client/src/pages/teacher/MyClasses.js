@@ -15,7 +15,8 @@ export default function MyClasses() {
 
   const filtered = classes.filter((cls) => {
     if (!search) return true;
-    const q = search.toLowerCase();
+   const q = search.trim().toLowerCase();
+if (!q) return true;
     return (
       (cls.subject?.name || cls.subjectName || "").toLowerCase().includes(q) ||
       (cls.section?.name || cls.sectionName || cls.section || "").toLowerCase().includes(q) ||
