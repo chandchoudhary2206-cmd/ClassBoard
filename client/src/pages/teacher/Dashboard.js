@@ -46,7 +46,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Teacher Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Welcome back to your classes</p>
+        <p className="text-sm text-gray-400 py-8 text-center">No classes scheduled for today. Enjoy your free time!</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
