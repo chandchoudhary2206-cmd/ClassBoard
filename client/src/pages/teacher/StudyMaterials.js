@@ -22,12 +22,23 @@ export default function StudyMaterials() {
   const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [search, setSearch] = useState("");
 
   const { data, loading, error, refetch } = useFetch("/study-materials");
   const { data: classesData } = useFetch("/classes?teacher=me");
 
   const materials = data?.materials || data?.data || [];
   const classes = classesData?.classes || classesData?.data || [];
+ const filteredMaterials = materials.filter((mat) => {
+  const q = search.trim().toLowerCase();
+
+  return (
+    (mat.title || "").toLowerCase().includes(q) ||
+    (mat.description || "").toLowerCase().includes(q) ||
+    (mat.subject?.name || "").toLowerCase().includes(q) ||
+    (mat.class?.name || "").toLowerCase().includes(q)
+  );
+});
 
   const subjects = editing
     ? classes.find((c) => c._id === (editing.classId || editing.class?._id))?.subjects || []
