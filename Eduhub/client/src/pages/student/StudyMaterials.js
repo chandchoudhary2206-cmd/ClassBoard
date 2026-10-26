@@ -3,10 +3,16 @@ import useFetch from "../../hooks/useFetch";
 import DataTable from "../../components/DataTable";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import EmptyState from "../../components/EmptyState";
-import { FiBookOpen, FiDownload, FiFilter } from "react-icons/fi";
+import {
+  FiBookOpen,
+  FiDownload,
+  FiFilter,
+  FiSearch,
+} from "react-icons/fi";
 
 export default function StudyMaterials() {
   const [subjectFilter, setSubjectFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data, loading, error } = useFetch("/study-materials");
 
