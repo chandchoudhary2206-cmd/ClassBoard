@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import useFetch from "../../hooks/useFetch";
 import api from "../../services/api";
 import Modal from "../../components/Modal";
@@ -25,7 +25,7 @@ const TYPE_OPTIONS = [
 export default function Announcements() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(initialForm);
+const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -33,6 +33,16 @@ export default function Announcements() {
   const { data: classesData } = useFetch("/classes?teacher=me");
 
   const announcements = data?.announcements || data?.data || [];
+  const filteredAnnouncements = useMemo(() => {
+  const query = search.trim().toLowerCase();
+
+  if (!query) return announcements;
+
+  return announcements.filter((ann) =>
+    [ann.title, ann.content, ann.type, ann.targetClass?.name, ann.targetClassName]
+      .some((value) => String(value || "").toLowerCase().includes(query))
+  );
+}, [announcements, search]);
   const classes = classesData?.classes || classesData?.data || [];
 
   const openAdd = () => {
